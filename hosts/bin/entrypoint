@@ -1,0 +1,9 @@
+#!/bin/bash
+# Starts the host's role service, then runs the NRPE agent in the foreground.
+set -euo pipefail
+case "${ROLE:-}" in
+  web)   nginx ;;
+  app)   backup ;;
+  files) make-cert 365 ;;
+esac
+exec /usr/sbin/nrpe -c /etc/nagios/nrpe.cfg -f

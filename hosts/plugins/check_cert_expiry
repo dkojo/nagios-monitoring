@@ -1,0 +1,11 @@
+#!/bin/bash
+# Nagios plugin: days until a certificate expires.
+#   check_cert_expiry -w <days> -c <days> -f <cert.pem>   exit 0 OK, 1 WARNING, 2 CRITICAL, 3 UNKNOWN
+while getopts w:c:f: o; do case $o in w) warn=$OPTARG ;; c) crit=$OPTARG ;; f) file=$OPTARG ;; *) exit 3 ;; esac; done
+end=$(openssl x509 -enddate -noout -in "$file" 2>/dev/null | cut -d= -f2)
+if [ -z "$end" ]; then echo "CERT UNKNOWN - cannot read $file"; exit 3; fi
+days=$(( ($(date -d "$end" +%s) - $(date +%s)) / 86400 ))
+msg="$(basename "$file") expires in ${days} days ($end) | days=$days;$warn;$crit"
+if [ "$days" -lt "$crit" ]; then echo "CERT CRITICAL - $msg"; exit 2; fi
+if [ "$days" -lt "$warn" ]; then echo "CERT WARNING - $msg"; exit 1; fi
+echo "CERT OK - $msg"

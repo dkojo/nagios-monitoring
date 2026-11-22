@@ -1,0 +1,8 @@
+#!/bin/bash
+# Nagios event handler for web's HTTP check: once the failure is confirmed (HARD CRITICAL),
+# start nginx again through NRPE. The PROBLEM alert still goes out, then the RECOVERY.
+state="$1" type="$2" host="$3"
+if [ "$state" = CRITICAL ] && [ "$type" = HARD ]; then
+  /usr/lib/nagios/plugins/check_nrpe -H "$host" -t 15 -c restart_nginx
+fi
+exit 0

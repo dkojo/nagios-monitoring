@@ -1,0 +1,50 @@
+# Nagios, the four monitored servers and the on-call inbox, on one network.
+services:
+  nagios:
+    build: ./nagios
+    container_name: nagios
+    hostname: nagios
+    networks: { estate: { ipv4_address: 10.43.0.10 } }
+    depends_on: [web, app, db, files, inbox]
+
+  web:
+    image: estate-host
+    build: ./hosts
+    container_name: web
+    hostname: web
+    environment: { ROLE: web }
+    networks: { estate: { ipv4_address: 10.43.0.11 } }
+
+  app:
+    image: estate-host
+    container_name: app
+    hostname: app
+    environment: { ROLE: app }
+    networks: { estate: { ipv4_address: 10.43.0.12 } }
+
+  db:
+    image: estate-host
+    container_name: db
+    hostname: db
+    environment: { ROLE: db }
+    tmpfs: ["/data:size=64m"]
+    networks: { estate: { ipv4_address: 10.43.0.13 } }
+
+  files:
+    image: estate-host
+    container_name: files
+    hostname: files
+    environment: { ROLE: files }
+    networks: { estate: { ipv4_address: 10.43.0.14 } }
+
+  inbox:
+    image: python:3.13-alpine
+    container_name: inbox
+    command: ["python3", "-u", "/inbox/inbox.py"]
+    volumes: ["./inbox:/inbox:ro"]
+    networks: { estate: { ipv4_address: 10.43.0.20 } }
+
+networks:
+  estate:
+    ipam:
+      config: [{ subnet: 10.43.0.0/24 }]

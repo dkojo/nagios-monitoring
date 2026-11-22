@@ -1,0 +1,11 @@
+#!/bin/bash
+# Nagios plugin: is the newest backup recent enough?
+#   check_backup_age -w <hours> -c <hours> -d <dir>      exit 0 OK, 1 WARNING, 2 CRITICAL
+while getopts w:c:d: o; do case $o in w) warn=$OPTARG ;; c) crit=$OPTARG ;; d) dir=$OPTARG ;; *) exit 3 ;; esac; done
+newest=$(ls -1t "$dir" 2>/dev/null | head -n 1)
+if [ -z "$newest" ]; then echo "BACKUP CRITICAL - no backups in $dir"; exit 2; fi
+age=$(( ($(date +%s) - $(stat -c %Y "$dir/$newest")) / 3600 ))
+msg="newest backup $newest is ${age}h old | age=${age}h;$warn;$crit"
+if [ "$age" -ge "$crit" ]; then echo "BACKUP CRITICAL - $msg"; exit 2; fi
+if [ "$age" -ge "$warn" ]; then echo "BACKUP WARNING - $msg"; exit 1; fi
+echo "BACKUP OK - $msg"

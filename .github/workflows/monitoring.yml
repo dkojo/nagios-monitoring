@@ -1,0 +1,51 @@
+name: monitoring
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  nagios:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Build the images
+        run: docker compose build -q
+
+      - name: Validate the Nagios config
+        run: docker compose run --rm --no-deps nagios /usr/sbin/nagios4 -v /etc/nagios4/nagios.cfg
+
+      - name: Start Nagios and the hosts
+        run: docker compose up -d && docker compose ps
+
+      - name: "Baseline: every check OK"
+        run: python3 checks/verify.py baseline
+
+      - name: "Fault on web: nginx down"
+        run: python3 checks/verify.py fault web
+
+      - name: "Fault on app: stale backups"
+        run: python3 checks/verify.py fault app
+
+      - name: "Fault on db: disk filling"
+        run: python3 checks/verify.py fault db
+
+      - name: "Fault on files: cert expiring"
+        run: python3 checks/verify.py fault files
+
+      - name: All clear
+        run: python3 checks/verify.py allclear
+
+      - name: Show Nagios on failure
+        if: failure()
+        run: docker exec nagios tail -n 60 /var/log/nagios4/nagios.log; docker compose logs --tail 30 inbox

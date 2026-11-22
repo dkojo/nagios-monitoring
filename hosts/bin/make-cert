@@ -1,0 +1,6 @@
+#!/bin/bash
+# Issues the file server's TLS certificate, valid for $1 days.
+set -euo pipefail
+openssl req -x509 -newkey rsa:2048 -nodes -days "$1" -subj /CN=files.estate.internal \
+  -keyout /etc/ssl/files/server.key -out /etc/ssl/files/server.crt 2>/dev/null
+chmod 644 /etc/ssl/files/server.crt
