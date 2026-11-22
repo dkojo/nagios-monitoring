@@ -105,7 +105,7 @@ def fault(host):
         sys.exit(1)
     heal = recovery['at'] - t1
     if not f['fix']:
-        log = subprocess.run(['docker', 'exec', 'nagios', 'grep', 'SERVICE EVENT HANDLER: web;HTTP', '/var/log/nagios4/nagios.log'],
+        log = subprocess.run(['docker', 'exec', 'nagios', 'grep', 'SERVICE EVENT HANDLER: web;HTTP;CRITICAL;HARD', '/var/log/nagios4/nagios.log'],
                              capture_output=True, text=True).stdout.strip().splitlines()
         print(f'Event handler ran: {log[-1].split("] ", 1)[-1] if log else "not found"}')
         if not log:
